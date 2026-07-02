@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BGP Core - ASN Provider Manager</title>
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- App Wrapper -->
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <i class="fa-solid fa-circle-nodes logo-icon"></i>
+        </div>
+        <div class="brand-text">
+          <h1>BGP Core</h1>
+          <span>ASN Management</span>
+        </div>
+      </div>
+      
+      <nav class="nav-menu">
+        <a href="#" class="nav-item active" data-tab="dashboard">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-tab="connections">
+          <i class="fa-solid fa-network-wired"></i>
+          <span>Conexões ASN</span>
+        </a>
+        <a href="#" class="nav-item" data-tab="prefixes">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Prefixos Permitidos</span>
+        </a>
+        <a href="#" class="nav-item" data-tab="routers">
+          <i class="fa-solid fa-server"></i>
+          <span>Roteadores BGP</span>
+        </a>
+        <a href="#" class="nav-item" data-tab="contracts">
+          <i class="fa-solid fa-file-signature"></i>
+          <span>Contratos</span>
+        </a>
+        <a href="#" class="nav-item" data-tab="zabbix">
+          <i class="fa-solid fa-gears"></i>
+          <span>Integração Zabbix</span>
+        </a>
+        <a href="#" class="nav-item" data-tab="settings">
+          <i class="fa-solid fa-gear"></i>
+          <span>Minhas Configurações</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <span class="status-indicator online"></span>
+        <span class="status-text">Conectado ao Postgres</span>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Navbar -->
+      <header class="top-navbar">
+        <div class="page-title-section">
+          <h2 id="page-title">Dashboard Geral</h2>
+          <p id="page-subtitle" class="text-muted">Visão unificada das conexões de rede BGP dos clientes provedores.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary btn-glow" id="btn-quick-add">
+            <i class="fa-solid fa-plus"></i> Nova Conexão ASN
+          </button>
+        </div>
+      </header>
+
+      <!-- Dynamic Alert Container -->
+      <div id="toast-container"></div>
+
+      <!-- Tab Content Area -->
+      <div class="content-body">
+        
+        <!-- DASHBOARD TAB -->
+        <section id="tab-dashboard" class="tab-pane active">
+          <!-- Stats Grid -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon bg-purple-glow">
+                <i class="fa-solid fa-network-wired"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="stat-connections-count">0</h3>
+                <p>Sessões ASN Ativas</p>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon bg-blue-glow">
+                <i class="fa-solid fa-server"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="stat-routers-count">0</h3>
+                <p>Roteadores Ativos</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon bg-green-glow">
+                <i class="fa-solid fa-file-contract"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="stat-contracts-count">0</h3>
+                <p>Contratos Cadastrados</p>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon bg-cyan-glow">
+                <i class="fa-solid fa-route"></i>
+              </div>
+              <div class="stat-info">
+                <h3 id="stat-prefixes-count">0</h3>
+                <p>Prefixos Permitidos</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Grid -->
+          <div class="dashboard-details-grid">
+            <!-- Recent ASNs -->
+            <div class="details-card card-full">
+              <div class="card-header">
+                <h3>Visualização Geral das Conexões</h3>
+                <span class="card-badge">Monitor</span>
+              </div>
+              <div class="card-body">
+                <div class="table-search-bar">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="dashboard-search" placeholder="Buscar por ASN, cliente, contrato, IP ou VLAN...">
+                </div>
+                <div class="table-responsive">
+                  <table class="data-table" id="dashboard-connections-table">
+                    <thead>
+                      <tr>
+                        <th>ASN</th>
+                        <th>Cliente / Provedor</th>
+                        <th>Roteador BGP</th>
+                        <th>VLAN</th>
+                        <th>Peers (Lado Z)</th>
+                        <th>Prefixos</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Dynamic rows -->
+                    </tbody>
+                  </table>
+                </div>
+                <div class="pagination-container" style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px;">
+                  <div class="pagination-limit">
+                    <label for="dashboard-limit-select" class="text-muted text-sm">Exibir:</label>
+                    <select id="dashboard-limit-select" style="width: auto; display: inline-block; padding: 4px 8px; font-size: 13px; margin-left: 5px;">
+                      <option value="5" selected>5</option>
+                      <option value="10">10</option>
+                      <option value="20">20</option>
+                      <option value="50">50</option>
+                    </select>
+                    <span class="text-muted text-sm" style="margin-left: 5px;">registros por página</span>
+                  </div>
+                  <div class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" id="btn-dashboard-prev" style="padding: 6px 12px; font-size: 13px;">
+                      <i class="fa-solid fa-angle-left"></i> Anterior
+                    </button>
+                    <span class="text-muted text-sm" id="dashboard-page-indicator">Página 1 de 1</span>
+                    <button type="button" class="btn btn-secondary" id="btn-dashboard-next" style="padding: 6px 12px; font-size: 13px;">
+                      Próxima <i class="fa-solid fa-angle-right"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ASN CONNECTIONS TAB -->
+        <section id="tab-connections" class="tab-pane">
+          <div class="card-container">
+            <div class="card-header-actions">
+              <h3>Clientes Provedores & Conexões ASN</h3>
+              <button class="btn btn-secondary" onclick="openConnectionModal()">
+                <i class="fa-solid fa-plus"></i> Adicionar Conexão
+              </button>
+            </div>
+            <div class="table-search-bar" style="margin-top: -8px;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="connections-search" placeholder="Buscar por ASN, cliente, contrato, IP ou VLAN...">
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="connections-table">
+                <thead>
+                  <tr>
+                    <th>ASN</th>
+                    <th>Cliente / Contrato</th>
+                    <th>Roteador BGP</th>
+                    <th>VLAN</th>
+                    <th>IPv4 Roteador / Cliente</th>
+                    <th>IPv6 Roteador / Cliente</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination-container" style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px;">
+              <div class="pagination-limit">
+                <label for="connections-limit-select" class="text-muted text-sm">Exibir:</label>
+                <select id="connections-limit-select" style="width: auto; display: inline-block; padding: 4px 8px; font-size: 13px; margin-left: 5px;">
+                  <option value="5" selected>5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+                <span class="text-muted text-sm" style="margin-left: 5px;">registros por página</span>
+              </div>
+              <div class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" class="btn btn-secondary" id="btn-connections-prev" style="padding: 6px 12px; font-size: 13px;">
+                  <i class="fa-solid fa-angle-left"></i> Anterior
+                </button>
+                <span class="text-muted text-sm" id="connections-page-indicator">Página 1 de 1</span>
+                <button type="button" class="btn btn-secondary" id="btn-connections-next" style="padding: 6px 12px; font-size: 13px;">
+                  Próxima <i class="fa-solid fa-angle-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PERMITTED PREFIXES TAB -->
+        <section id="tab-prefixes" class="tab-pane">
+          <div class="card-container">
+            <div class="card-header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 style="margin: 0;">Prefixos Permitidos por Cliente</h3>
+              <button class="btn btn-secondary" onclick="openPrefixModal()">
+                <i class="fa-solid fa-plus"></i> Adicionar Prefixo
+              </button>
+            </div>
+            <div class="table-search-bar" style="margin-top: -8px; margin-bottom: 20px;">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="prefixes-search" placeholder="Buscar por ASN, cliente, bloco CIDR ou descrição...">
+            </div>
+            <div class="table-responsive">
+              <table class="data-table" id="prefixes-table">
+                  <thead>
+                    <tr>
+                      <th>ASN</th>
+                      <th>Cliente</th>
+                      <th>Bloco CIDR</th>
+                      <th>Máscara Máx</th>
+                      <th>Descrição</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Dynamic rows -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="pagination-container" style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px;">
+                <div class="pagination-limit">
+                  <label for="prefixes-limit-select" class="text-muted text-sm">Exibir:</label>
+                  <select id="prefixes-limit-select" style="width: auto; display: inline-block; padding: 4px 8px; font-size: 13px; margin-left: 5px;">
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                  <span class="text-muted text-sm" style="margin-left: 5px;">registros por página</span>
+                </div>
+                <div class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                  <button type="button" class="btn btn-secondary" id="btn-prefixes-prev" style="padding: 6px 12px; font-size: 13px;">
+                    <i class="fa-solid fa-angle-left"></i> Anterior
+                  </button>
+                  <span class="text-muted text-sm" id="prefixes-page-indicator">Página 1 de 1</span>
+                  <button type="button" class="btn btn-secondary" id="btn-prefixes-next" style="padding: 6px 12px; font-size: 13px;">
+                    Próxima <i class="fa-solid fa-angle-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+        </section>
+
+        <!-- ROUTERS TAB -->
+        <section id="tab-routers" class="tab-pane">
+          <div class="split-layout">
+            <!-- Form Card -->
+            <div class="card-container form-sidebar">
+              <h3 id="router-form-title">Cadastrar Roteador BGP</h3>
+              <p class="text-muted text-sm">Defina os roteadores de borda para terminação das sessões dos provedores.</p>
+              
+              <form id="router-form" class="mt-4">
+                <input type="hidden" id="router-id">
+                
+                <div class="form-group">
+                  <label for="router-name">Nome do Roteador</label>
+                  <input type="text" id="router-name" placeholder="Ex: Bord-SP-01" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="router-ip">Endereço IP (IPv4 ou IPv6)</label>
+                  <input type="text" id="router-ip" placeholder="Ex: 172.16.200.1" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="router-location">Localização / Rack</label>
+                  <input type="text" id="router-location" placeholder="Ex: Datacenter Equinix SP2 - Rack C03">
+                </div>
+
+                <div class="form-buttons">
+                  <button type="button" class="btn btn-secondary" id="btn-cancel-router-edit" style="display:none;">Cancelar</button>
+                  <button type="submit" class="btn btn-primary btn-block">Salvar Roteador</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- List Card -->
+            <div class="card-container flex-grow">
+              <div class="card-header-actions" style="margin-bottom: 20px;">
+                <h3>Roteadores Cadastrados</h3>
+                <button type="button" class="btn btn-secondary btn-glow" id="btn-zabbix-sync">
+                  <i class="fa-solid fa-rotate"></i> Sincronizar Zabbix
+                </button>
+              </div>
+              <div class="table-search-bar" style="margin-top: -8px;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="routers-search" placeholder="Buscar roteador por nome ou IP...">
+              </div>
+              <div class="table-responsive">
+                <table class="data-table" id="routers-table">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Endereço IP</th>
+                      <th>Localização</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Dynamic rows -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="pagination-container" style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px;">
+                <div class="pagination-limit">
+                  <label for="routers-limit-select" class="text-muted text-sm">Exibir:</label>
+                  <select id="routers-limit-select" style="width: auto; display: inline-block; padding: 4px 8px; font-size: 13px; margin-left: 5px;">
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                  <span class="text-muted text-sm" style="margin-left: 5px;">registros por página</span>
+                </div>
+                <div class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                  <button type="button" class="btn btn-secondary" id="btn-routers-prev" style="padding: 6px 12px; font-size: 13px;">
+                    <i class="fa-solid fa-angle-left"></i> Anterior
+                  </button>
+                  <span class="text-muted text-sm" id="routers-page-indicator">Página 1 de 1</span>
+                  <button type="button" class="btn btn-secondary" id="btn-routers-next" style="padding: 6px 12px; font-size: 13px;">
+                    Próxima <i class="fa-solid fa-angle-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CONTRACTS TAB -->
+        <section id="tab-contracts" class="tab-pane">
+          <div class="split-layout">
+            <!-- Form Card -->
+            <div class="card-container form-sidebar">
+              <h3 id="contract-form-title">Cadastrar Contrato</h3>
+              <p class="text-muted text-sm">Gere os contratos de trânsito IP associados a cada provedor.</p>
+              
+              <form id="contract-form" class="mt-4">
+                <input type="hidden" id="contract-id">
+                
+                <div class="form-group">
+                  <label for="contract-number">Número do Contrato</label>
+                  <input type="text" id="contract-number" placeholder="Ex: CTR-2026-042" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="contract-client-name">Razão Social / Cliente</label>
+                  <input type="text" id="contract-client-name" placeholder="Ex: Provedor RapidoNet Ltda" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="contract-status">Status do Contrato</label>
+                  <select id="contract-status" required>
+                    <option value="active">Ativo (Active)</option>
+                    <option value="suspended">Suspenso (Suspended)</option>
+                    <option value="terminated">Cancelado (Terminated)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="contract-start-date">Data de Início</label>
+                  <input type="date" id="contract-start-date" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="contract-end-date">Data de Fim</label>
+                  <input type="date" id="contract-end-date">
+                </div>
+
+                <div class="form-buttons">
+                  <button type="button" class="btn btn-secondary" id="btn-cancel-contract-edit" style="display:none;">Cancelar</button>
+                  <button type="submit" class="btn btn-primary btn-block">Salvar Contrato</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- List Card -->
+            <div class="card-container flex-grow">
+              <h3>Contratos Cadastrados</h3>
+              <div class="table-responsive mt-4">
+                <table class="data-table" id="contracts-table">
+                  <thead>
+                    <tr>
+                      <th>Contrato Nº</th>
+                      <th>Cliente / Provedor</th>
+                      <th>Status</th>
+                      <th>Início</th>
+                      <th>Término</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Dynamic rows -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="pagination-container" style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px;">
+                <div class="pagination-limit">
+                  <label for="contracts-limit-select" class="text-muted text-sm">Exibir:</label>
+                  <select id="contracts-limit-select" style="width: auto; display: inline-block; padding: 4px 8px; font-size: 13px; margin-left: 5px;">
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                  <span class="text-muted text-sm" style="margin-left: 5px;">registros por página</span>
+                </div>
+                <div class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                  <button type="button" class="btn btn-secondary" id="btn-contracts-prev" style="padding: 6px 12px; font-size: 13px;">
+                    <i class="fa-solid fa-angle-left"></i> Anterior
+                  </button>
+                  <span class="text-muted text-sm" id="contracts-page-indicator">Página 1 de 1</span>
+                  <button type="button" class="btn btn-secondary" id="btn-contracts-next" style="padding: 6px 12px; font-size: 13px;">
+                    Próxima <i class="fa-solid fa-angle-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ZABBIX TAB -->
+        <section id="tab-zabbix" class="tab-pane">
+          <div class="split-layout">
+            <!-- Form Card -->
+            <div class="card-container form-sidebar">
+              <h3>Configuração Zabbix</h3>
+              <p class="text-muted text-sm">Insira os dados da API JSON-RPC do Zabbix para sincronização.</p>
+              
+              <form id="zabbix-form" class="mt-4">
+                <div class="form-group">
+                  <label for="zabbix-url">API URL (api_jsonrpc.php)</label>
+                  <input type="text" id="zabbix-url" placeholder="http://zabbix.suaempresa.com/zabbix/api_jsonrpc.php" required>
+                  <small class="form-help">Use a palavra chave <code>mock</code> para simular dados de teste do Zabbix.</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="zabbix-token">Token API (Zabbix 5.4+)</label>
+                  <input type="text" id="zabbix-token" placeholder="Digite o Token de API do Zabbix">
+                  <small class="form-help">Caso forneça o Token, o usuário e senha não são necessários.</small>
+                </div>
+
+                <div class="divider mt-4">OU</div>
+
+                <div class="form-group mt-4">
+                  <label for="zabbix-username">Usuário (Legado)</label>
+                  <input type="text" id="zabbix-username" placeholder="Admin">
+                </div>
+
+                <div class="form-group">
+                  <label for="zabbix-password">Senha (Legado)</label>
+                  <input type="password" id="zabbix-password" placeholder="zabbix">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Salvar Configurações</button>
+              </form>
+            </div>
+
+            <!-- Settings Info Card -->
+            <div class="card-container flex-grow">
+              <h3>Status da Integração</h3>
+              <div class="zabbix-status-panel mt-4">
+                <div class="status-row">
+                  <span class="status-label">API Endpoint:</span>
+                  <span class="status-value" id="zabbix-status-url">Não configurado</span>
+                </div>
+                <div class="status-row">
+                  <span class="status-label">Autenticação:</span>
+                  <span class="status-value" id="zabbix-status-auth">Nenhuma</span>
+                </div>
+                <div class="status-row">
+                  <span class="status-label">Última Sincronização:</span>
+                  <span class="status-value" id="zabbix-status-sync">Nunca</span>
+                </div>
+                <div class="mt-4">
+                  <button type="button" class="btn btn-secondary btn-glow" id="btn-zabbix-test-sync">
+                    <i class="fa-solid fa-rotate"></i> Sincronizar Agora
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SETTINGS TAB -->
+        <section id="tab-settings" class="tab-pane">
+          <div class="split-layout">
+            <!-- Form Card -->
+            <div class="card-container form-sidebar">
+              <h3 id="settings-form-title">Cadastrar ASN Operadora</h3>
+              <p class="text-muted text-sm">Configure seus ASNs de trânsito, nomes e logos para o Lado A no PDF.</p>
+              
+              <form id="settings-form" class="mt-4">
+                <input type="hidden" id="setting-id">
+                
+                <div class="form-group">
+                  <label for="setting-asn">Número do ASN</label>
+                  <input type="number" id="setting-asn" min="1" max="4294967295" placeholder="Ex: 264426" required>
+                </div>
+
+                <div class="form-group">
+                  <label for="setting-name">Nome de Exibição (PDF)</label>
+                  <input type="text" id="setting-name" placeholder="Ex: Minha Operadora Principal" required>
+                </div>
+
+                <!-- Logo Upload -->
+                <div class="form-group">
+                  <label>Logo da Operadora (PDF)</label>
+                  <div class="logo-upload-zone" id="logo-upload-zone">
+                    <input type="file" id="setting-logo-file" accept="image/png,image/jpeg,image/svg+xml,image/gif,image/webp" style="display:none;">
+                    <div class="logo-upload-placeholder" id="logo-upload-placeholder">
+                      <i class="fa-solid fa-cloud-arrow-up" style="font-size: 28px; color: var(--color-primary); margin-bottom: 8px;"></i>
+                      <p style="margin: 0; font-size: 13px; color: var(--text-muted);">Clique ou arraste uma imagem</p>
+                      <p style="margin: 4px 0 0; font-size: 11px; color: var(--text-dark);">PNG, JPG, SVG — Máx. 1MB</p>
+                    </div>
+                    <div class="logo-preview-wrap" id="logo-preview-wrap" style="display:none;">
+                      <img id="setting-logo-preview" src="" alt="Preview da Logo" style="max-height: 80px; max-width: 100%; object-fit: contain; border-radius: 6px;">
+                      <button type="button" class="logo-remove-btn" id="btn-remove-logo" title="Remover logo">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-buttons">
+                  <button type="button" class="btn btn-secondary" id="btn-cancel-setting-edit" style="display:none;">Cancelar</button>
+                  <button type="submit" class="btn btn-primary btn-block">Salvar Configuração</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- List Card -->
+            <div class="card-container flex-grow">
+              <h3>Meus ASNs Configurados</h3>
+              <div class="table-responsive mt-4">
+                <table class="data-table" id="settings-table">
+                  <thead>
+                    <tr>
+                      <th>Logo</th>
+                      <th>ASN</th>
+                      <th>Nome no PDF</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Dynamic rows -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="pagination-container" style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px;">
+                <div class="pagination-limit">
+                  <label for="settings-limit-select" class="text-muted text-sm">Exibir:</label>
+                  <select id="settings-limit-select" style="width: auto; display: inline-block; padding: 4px 8px; font-size: 13px; margin-left: 5px;">
+                    <option value="5" selected>5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                  <span class="text-muted text-sm" style="margin-left: 5px;">registros por página</span>
+                </div>
+                <div class="pagination-controls" style="display: flex; align-items: center; gap: 10px;">
+                  <button type="button" class="btn btn-secondary" id="btn-settings-prev" style="padding: 6px 12px; font-size: 13px;">
+                    <i class="fa-solid fa-angle-left"></i> Anterior
+                  </button>
+                  <span class="text-muted text-sm" id="settings-page-indicator">Página 1 de 1</span>
+                  <button type="button" class="btn btn-secondary" id="btn-settings-next" style="padding: 6px 12px; font-size: 13px;">
+                    Próxima <i class="fa-solid fa-angle-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- CONNECTION MODAL -->
+  <div class="modal-backdrop" id="connection-modal">
+    <div class="modal-box" style="width: 760px; max-width: 95%;">
+      <div class="modal-header">
+        <h3 id="connection-modal-title">Nova Conexão ASN</h3>
+        <button class="close-btn" onclick="closeConnectionModal()">&times;</button>
+      </div>
+      <form id="connection-form">
+        <input type="hidden" id="connection-id">
+        
+        <!-- Wizard Indicator -->
+        <div class="wizard-progress" style="display: flex; gap: 16px; margin-bottom: 16px; justify-content: center; border-bottom: 1px solid var(--border-glass); padding-bottom: 16px;">
+          <span class="wizard-dot active" id="wizard-dot-1" style="font-size: 13px; font-weight: 600; font-family: var(--font-display); padding: 4px 12px; border-radius: 20px; background: rgba(139, 92, 246, 0.15); color: #c084fc;">1. Conectividade BGP</span>
+          <span class="wizard-arrow" style="color: var(--text-muted);">&rarr;</span>
+          <span class="wizard-dot" id="wizard-dot-2" style="font-size: 13px; font-weight: 600; font-family: var(--font-display); padding: 4px 12px; border-radius: 20px; color: var(--text-muted);">2. Prefixos Permitidos</span>
+        </div>
+
+        <!-- Service Type Selector Toggle -->
+        <div class="service-type-selector">
+          <button type="button" class="btn-service-type active" id="btn-service-bgp">
+            <i class="fa-solid fa-square-rss"></i> Sessão BGP
+          </button>
+          <button type="button" class="btn-service-type" id="btn-service-l2l">
+            <i class="fa-solid fa-route"></i> LAN-TO-LAN / L2L
+          </button>
+        </div>
+        <input type="hidden" id="conn-service-type" value="bgp">
+
+        <!-- STEP 1: CONECTIVIDADE -->
+        <div id="connection-step-1" class="wizard-step">
+          <div class="form-grid">
+            <!-- Contrato Autocomplete (Common) -->
+            <div class="form-group col-6 autocomplete-container" style="position: relative;">
+              <label for="conn-contract-search">Contrato do Cliente</label>
+              <input type="text" id="conn-contract-search" placeholder="Digite para buscar contrato..." required autocomplete="off">
+              <input type="hidden" id="conn-contract-id">
+              <div class="autocomplete-suggestions" id="conn-contract-suggestions"></div>
+            </div>
+
+            <!-- VLAN (Common) -->
+            <div class="form-group col-6">
+              <label for="conn-vlan" id="lbl-conn-vlan">ID da VLAN</label>
+              <input type="number" id="conn-vlan" min="1" max="4094" placeholder="100" required>
+            </div>
+
+            <!-- BGP L2L Divider: only visible in BGP mode -->
+            <div id="bgp-l2l-divider" class="form-group col-12" style="margin-top: 15px; margin-bottom: 5px;">
+              <h4 class="text-sm font-semibold" style="margin: 0; font-family: var(--font-display); color: #c084fc; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-link"></i> Transporte LAN-TO-LAN da Conexão
+              </h4>
+            </div>
+
+            <!-- Switch Lado A -->
+            <div class="form-group col-6 autocomplete-container" style="position: relative;">
+              <label for="conn-switch-a">Switch Lado A</label>
+              <input type="text" id="conn-switch-a" placeholder="Digite para buscar switch..." autocomplete="off">
+              <div class="autocomplete-suggestions" id="conn-switch-a-suggestions"></div>
+            </div>
+
+            <!-- Switch Lado Z -->
+            <div class="form-group col-6 autocomplete-container" style="position: relative;">
+              <label for="conn-switch-z">Switch Lado Z</label>
+              <input type="text" id="conn-switch-z" placeholder="Digite para buscar switch..." autocomplete="off">
+              <div class="autocomplete-suggestions" id="conn-switch-z-suggestions"></div>
+            </div>
+
+            <!-- Porta Lado A -->
+            <div class="form-group col-6 autocomplete-container" style="position: relative;">
+              <label for="conn-port-a">Porta Switch Lado A</label>
+              <input type="text" id="conn-port-a" placeholder="Digite ou selecione porta..." autocomplete="off">
+              <div class="autocomplete-suggestions" id="conn-port-a-suggestions"></div>
+            </div>
+
+            <!-- Porta Lado Z -->
+            <div class="form-group col-6 autocomplete-container" style="position: relative;">
+              <label for="conn-port-z">Porta Switch Lado Z</label>
+              <input type="text" id="conn-port-z" placeholder="Digite ou selecione porta..." autocomplete="off">
+              <div class="autocomplete-suggestions" id="conn-port-z-suggestions"></div>
+            </div>
+
+            <!-- Status (Common) -->
+            <div class="form-group col-12">
+              <label for="conn-status" id="lbl-conn-status">Status da Conexão</label>
+              <select id="conn-status" required>
+                <option value="active">Ativo (Active)</option>
+                <option value="inactive">Inativo (Inactive)</option>
+              </select>
+            </div>
+
+            <!-- BGP SPECIFIC FIELDS -->
+            <div id="bgp-fields-group" style="display: contents;">
+              <!-- ASN Operadora (Lado A) Dropdown -->
+              <div class="form-group col-6">
+                <label for="conn-operator-asn">ASN da Operadora (Lado A)</label>
+                <select id="conn-operator-asn">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+
+              <!-- ASN Cliente (Lado Z) (BGP-only) -->
+              <div class="form-group col-6">
+                <label for="conn-asn" id="lbl-conn-asn">ASN do Cliente (Lado Z) *</label>
+                <div class="input-with-prefix">
+                  <span class="input-prefix">AS</span>
+                  <input type="number" id="conn-asn" min="1" max="4294967295" placeholder="65123" required>
+                </div>
+              </div>
+
+              <!-- Roteador Autocomplete -->
+              <div class="form-group col-12 autocomplete-container" style="position: relative;">
+                <label for="conn-router-search">Roteador Conectado</label>
+                <input type="text" id="conn-router-search" placeholder="Digite para buscar roteador..." autocomplete="off">
+                <input type="hidden" id="conn-router-id">
+                <div class="autocomplete-suggestions" id="conn-router-suggestions"></div>
+              </div>
+
+              <!-- IPv4 Lado A -->
+              <div class="form-group col-6">
+                <label for="conn-ipv4-router">IPv4 Lado A - Operadora (CIDR)</label>
+                <input type="text" id="conn-ipv4-router" placeholder="Ex: 192.168.1.1/30">
+              </div>
+
+              <!-- IPv4 Lado Z -->
+              <div class="form-group col-6">
+                <label for="conn-ipv4-client">IPv4 Lado Z - Cliente (CIDR)</label>
+                <input type="text" id="conn-ipv4-client" placeholder="Ex: 192.168.1.2/30">
+              </div>
+
+              <!-- IPv6 Lado A -->
+              <div class="form-group col-6">
+                <label for="conn-ipv6-router">IPv6 Lado A - Operadora (CIDR)</label>
+                <input type="text" id="conn-ipv6-router" placeholder="Ex: 2001:db8:1::1/127">
+              </div>
+
+              <!-- IPv6 Lado Z -->
+              <div class="form-group col-6">
+                <label for="conn-ipv6-client">IPv6 Lado Z - Cliente (CIDR)</label>
+                <input type="text" id="conn-ipv6-client" placeholder="Ex: 2001:db8:1::2/127">
+              </div>
+
+              <!-- LOA Files (Letter of Authorization) -->
+              <div class="form-group col-12" style="margin-top: 10px;">
+                <label>Cartas de Autorização (LOA) anexadas</label>
+                <div class="file-upload-wrapper" style="border: 1px dashed var(--border-glass); border-radius: var(--radius-md); padding: 16px; text-align: center; background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('conn-loa-file-input').click()">
+                  <i class="fa-solid fa-cloud-arrow-up" style="font-size: 24px; color: #8b5cf6; margin-bottom: 8px;"></i>
+                  <div style="font-size: 13px; font-weight: 500; color: var(--text-main);">Clique para anexar arquivo(s) LOA</div>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Formatos aceitos: PDF, Imagens (Máx: 10MB)</div>
+                  <input type="file" id="conn-loa-file-input" multiple style="display: none;">
+                </div>
+                <div id="conn-loa-files-list" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+                  <!-- Dynamic file tags with remove button -->
+                </div>
+              </div>
+            </div>
+
+            <!-- LAN-TO-LAN (L2L) SPECIFIC FIELDS -->
+            <div id="l2l-fields-group" style="display: contents;">
+              <!-- Tipo de VPN -->
+              <div class="form-group col-12">
+                <label for="conn-vpn-type">Tipo de VPN</label>
+                <select id="conn-vpn-type">
+                  <option value="VPWS">VPWS (P2P)</option>
+                  <option value="VPLS">VPLS (Multipoint)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: PREFIXOS PERMITIDOS -->
+        <div id="connection-step-2" class="wizard-step" style="display: none;">
+          <div class="prefixes-wizard-form">
+            <div class="form-grid">
+              <!-- CIDR Block -->
+              <div class="form-group col-6">
+                <label for="wizard-prefix-cidr">Bloco CIDR IP</label>
+                <input type="text" id="wizard-prefix-cidr" placeholder="Ex: 198.51.100.0/22">
+              </div>
+
+              <!-- Max Mask Length -->
+              <div class="form-group col-6">
+                <label for="wizard-prefix-max-length">Máscara Máx</label>
+                <input type="number" id="wizard-prefix-max-length" min="8" max="128" placeholder="Ex: 24">
+              </div>
+
+              <!-- Description and Add Button -->
+              <div class="form-group col-12" style="margin-bottom: 20px;">
+                <label for="wizard-prefix-description">Descrição do Prefixo</label>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                  <input type="text" id="wizard-prefix-description" placeholder="Ex: Bloco principal IPv4" style="flex-grow: 1;">
+                  <button type="button" class="btn btn-secondary btn-glow" id="btn-wizard-add-prefix" style="padding: 12px 24px; white-space: nowrap; height: 47px;">
+                    <i class="fa-solid fa-plus"></i> Adicionar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="wizard-prefixes-summary">
+            <h4 class="text-sm font-semibold" style="margin-bottom: 8px; font-family: var(--font-display); color: var(--text-main);">Prefixos Pendentes de Vínculo</h4>
+            <div id="wizard-prefixes-list" class="topology-prefixes-list" style="max-height: 160px; overflow-y: auto; padding: 12px; background: rgba(0,0,0,0.2); border-radius: var(--radius-md); border: 1px solid var(--border-glass); min-height: 80px;">
+              <!-- Dynamic prefix tags list rendered by JS -->
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="margin-top: 24px;">
+          <button type="button" class="btn btn-secondary" onclick="closeConnectionModal()" id="btn-wizard-cancel">Cancelar</button>
+          <button type="button" class="btn btn-secondary" id="btn-wizard-back" style="display: none;">Voltar</button>
+          <button type="button" class="btn btn-primary" id="btn-wizard-next">Próximo <i class="fa-solid fa-arrow-right"></i></button>
+          <button type="submit" class="btn btn-primary" id="btn-wizard-submit" style="display: none;">Salvar Conexão Completa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOPOLOGY MODAL -->
+  <div class="modal-backdrop" id="topology-modal">
+    <div class="modal-box" style="width: 800px; max-width: 95%;">
+      <div class="modal-header">
+        <h3 id="topology-modal-title">Topologia de Rede BGP</h3>
+        <button class="close-btn" onclick="closeTopologyModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <div id="topology-diagram-container">
+          <!-- Rendered dynamically by app.js -->
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 0 24px 24px 24px; border: none; margin: 0;">
+        <button type="button" class="btn btn-secondary" onclick="closeTopologyModal()">Fechar Diagrama</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREFIX MODAL -->
+  <div class="modal-backdrop" id="prefix-modal">
+    <div class="modal-box" style="width: 500px; max-width: 95%;">
+      <div class="modal-header">
+        <h3 id="prefix-form-title">Registrar Novo Prefixo</h3>
+        <button class="close-btn" onclick="closePrefixModal()">&times;</button>
+      </div>
+      <form id="prefix-form">
+        <input type="hidden" id="prefix-id">
+        
+        <div class="form-group autocomplete-container" style="padding: 0 24px; position: relative;">
+          <label for="prefix-conn-search">Conexão ASN Cliente</label>
+          <input type="text" id="prefix-conn-search" placeholder="Digite ASN ou nome do cliente para buscar..." autocomplete="off" required style="width: 100%;">
+          <input type="hidden" id="prefix-asn-conn-id">
+          <div class="autocomplete-suggestions" id="prefix-conn-suggestions"></div>
+        </div>
+
+        <div class="form-group" style="padding: 0 24px; margin-top: 16px;">
+          <label for="prefix-cidr">Bloco CIDR IP (ex: 45.230.120.0/22 ou 2001:db8::/32)</label>
+          <input type="text" id="prefix-cidr" placeholder="Ex: 198.51.100.0/22" required style="width: 100%;">
+        </div>
+
+        <div class="form-group" style="padding: 0 24px; margin-top: 16px;">
+          <label for="prefix-max-length">Máscara Máxima Permitida (Max Length)</label>
+          <input type="number" id="prefix-max-length" min="8" max="128" placeholder="Ex: 24" required style="width: 100%;">
+          <small class="form-help">Máscara mais específica permitida para divisão do bloco (ex: 24 para IPv4, 48 para IPv6).</small>
+        </div>
+
+        <div class="form-group" style="padding: 0 24px; margin-top: 16px;">
+          <label for="prefix-description">Descrição/Nota</label>
+          <textarea id="prefix-description" rows="3" placeholder="Ex: Bloco principal de anúncios do ISP" style="width: 100%;"></textarea>
+        </div>
+
+        <div class="modal-footer" style="padding: 24px; margin-top: 16px;">
+          <button type="button" class="btn btn-secondary" onclick="closePrefixModal()" id="btn-cancel-prefix-edit">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar Prefixo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONFIRM MODAL (substituindo confirm() nativo) -->
+  <div class="modal-backdrop" id="confirm-modal" style="z-index: 9999;">
+    <div class="modal-box" style="width: 440px; max-width: 95%; padding: 32px 28px;">
+      <div style="display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px;">
+        <div id="confirm-modal-icon" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; background: rgba(239,68,68,0.15); color: #ef4444;">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+          <h3 id="confirm-modal-title" style="margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--text-main);">Confirmar exclusão</h3>
+          <p id="confirm-modal-message" style="margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.5;"></p>
+        </div>
+      </div>
+      <div id="confirm-modal-warning" style="display:none; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #f87171; line-height: 1.5;"></div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-secondary" id="confirm-modal-cancel">Cancelar</button>
+        <button type="button" class="btn" id="confirm-modal-ok" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; box-shadow: 0 4px 12px rgba(239,68,68,0.35);">
+          <i class="fa-solid fa-trash" style="margin-right: 6px;"></i><span id="confirm-modal-btn-label">Excluir</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
